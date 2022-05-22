@@ -8,5 +8,6 @@ A simple ShareX server written in Go
 **Usage**
 1. Install golang
 2. Clone repo `git clone https://github.com/lorencerri/sharex-server-golang`
-3. Modify config.yml
-4. Run `go run .`
+3. Install dependencies `go get`
+4. Modify config.yml
+5. Run folder `go run .`
