@@ -50,6 +50,7 @@ func createHandlers(config Config) {
 	router := mux.NewRouter()
 
 	// Handle Routes
+	router.HandleFunc("/", StatsHandler)
 	router.HandleFunc("/upload", UploadHandler)
 	router.Handle("/{file}", http.FileServer(http.Dir("./files")))
 
