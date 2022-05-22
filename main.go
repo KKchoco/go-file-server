@@ -22,6 +22,7 @@ var config Config
 type ResponseObject struct {
 	Name string
 	Url  string
+	Size uint
 }
 
 func main() {
@@ -115,6 +116,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 							jsonObj := ResponseObject{
 								Name: name,
 								Url:  urlBase + filesPath + "/" + name,
+								Size: uint(fileHeader.Size),
 							}
 
 							if jsonResp, err := json.Marshal(jsonObj); err == nil {
