@@ -7,6 +7,7 @@ files:
     filesPath: /files
     maxUploadSize: 20
     keyLength: 7
+    password: "changeMe!" # Password required for uploading, leave empty for no password
     allowedFileTypes:
         [
             .png,

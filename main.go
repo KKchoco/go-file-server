@@ -67,6 +67,13 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 	log.Info().Msg("Beginning the upload process...")
 	start := time.Now()
 
+	// Validate the request's password
+	password := request.FormValue("password")
+	if len(config.Files.Password) > 0 && password != config.Files.Password {
+		returnError(response, http.StatusUnauthorized, "Invalid password provided in 'password' field of Form Data")
+		return
+	}
+
 	// Calculate the file size in bytes
 	maxBytes := config.Files.MaxUploadSize << 20 // Megabytes -> Bytes Conversion
 

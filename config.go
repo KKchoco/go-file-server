@@ -23,6 +23,7 @@ type FilesConfig struct {
 	FilesPath        string
 	MaxUploadSize    int64
 	KeyLength        int
+	Password         string
 	AllowedFileTypes []string
 }
 
