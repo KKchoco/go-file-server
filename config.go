@@ -9,12 +9,21 @@ import (
 
 type Config struct {
 	Server ServerConfig
+	Files  FilesConfig
 	Other  OtherConfig
 }
 
 type ServerConfig struct {
 	Address string
 	Port    string
+	Domain  string
+}
+
+type FilesConfig struct {
+	FilesPath        string
+	MaxUploadSize    int64
+	KeyLength        int
+	AllowedFileTypes []string
 }
 
 type OtherConfig struct {
@@ -36,6 +45,8 @@ func GetConfig() Config {
 
 	// Provide default values
 	viper.SetDefault("other.prettyOutput", false)
+	viper.SetDefault("files.keyLength", 7)
+	viper.SetDefault("files.maxUploadSize", 20)
 
 	// Assert config file to config variable
 	if err := viper.Unmarshal(&config); err != nil {
@@ -45,7 +56,7 @@ func GetConfig() Config {
 	return config
 }
 
-func ValidateConfig(config Config) bool {
+func isValidConfig(config Config) bool {
 	errCount := 0
 
 	if len(config.Server.Address) == 0 {
@@ -56,9 +67,13 @@ func ValidateConfig(config Config) bool {
 		log.Error().Msg("server.port is required")
 		errCount += 1
 	}
+	if len(config.Files.FilesPath) == 0 {
+		log.Error().Msg("files.filesPath is required")
+		errCount += 1
+	}
 
 	if errCount > 0 {
-		log.Fatal().Msg("Error occured when parsing config.yml")
+		log.Fatal().Msgf("%v errors occured while parsing config.yml", errCount)
 		return false
 	} else {
 		return true
