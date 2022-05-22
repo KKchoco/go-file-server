@@ -95,7 +95,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 				if contains(config.Files.AllowedFileTypes, ext) {
 
 					// Generate a random file name + information
-					id, _ := gonanoid.New(config.Files.KeyLength)
+					id, _ := gonanoid.Generate("ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz", config.Files.KeyLength)
 					name := id + ext
 					path := filepath.Join(".", config.Files.FilesPath, name)
 
@@ -106,16 +106,18 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 						// Write the bytes to the file
 						if _, err := createdFile.Write(bytes); err == nil {
 
-							// Determine URL base based on given config domain
-							urlBase := config.Server.Domain
-							if len(urlBase) == 0 {
-								urlBase = "http://" + config.Server.Address + ":" + config.Server.Port
+							// Determine protocol based on config
+							protocol := ""
+							if config.Server.HTTPS {
+								protocol = "https://"
+							} else {
+								protocol = "http://"
 							}
 
 							// Create response object to be passed
 							jsonObj := ResponseObject{
 								Name: name,
-								Url:  urlBase + filesPath + "/" + name,
+								Url:  protocol + request.Host + filesPath + "/" + name,
 								Size: uint(fileHeader.Size),
 							}
 

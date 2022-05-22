@@ -1,7 +1,7 @@
 server:
     address: 127.0.0.1
     port: 8080
-    domain: # Specify domain to overwrite return IP address & port
+    https: false # Whether or not the returning url should be HTTPS or not
 
 files:
     filesPath: /files

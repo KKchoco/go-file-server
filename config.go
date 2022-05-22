@@ -16,7 +16,7 @@ type Config struct {
 type ServerConfig struct {
 	Address string
 	Port    string
-	Domain  string
+	HTTPS   bool
 }
 
 type FilesConfig struct {
