@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gorilla/mux"
 	gonanoid "github.com/matoous/go-nanoid/v2"
@@ -49,8 +50,8 @@ func createHandlers(config Config) {
 	router := mux.NewRouter()
 
 	// Handle Routes
-	router.Handle(filesPath+"/{file}", http.StripPrefix(filesPath, http.FileServer(http.Dir("./files"))))
 	router.HandleFunc("/upload", UploadHandler)
+	router.Handle("/{file}", http.FileServer(http.Dir("./files")))
 
 	// Listen for requests
 	address := config.Server.Address + ":" + config.Server.Port
@@ -64,6 +65,7 @@ func StatsHandler(response http.ResponseWriter, request *http.Request) {
 
 func UploadHandler(response http.ResponseWriter, request *http.Request) {
 	log.Info().Msg("Beginning the upload process...")
+	start := time.Now()
 
 	// Calculate the file size in bytes
 	maxBytes := config.Files.MaxUploadSize << 20 // Megabytes -> Bytes Conversion
@@ -117,7 +119,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 							// Create response object to be passed
 							jsonObj := ResponseObject{
 								Name: name,
-								Url:  protocol + request.Host + filesPath + "/" + name,
+								Url:  protocol + request.Host + "/" + name,
 								Size: uint(fileHeader.Size),
 							}
 
@@ -128,6 +130,9 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 								response.Header().Set("Content-Type", "application/json")
 								response.WriteHeader(http.StatusOK)
 								response.Write(jsonResp)
+
+								duration := time.Since(start)
+								log.Info().Msgf("Captured and uploaded image in %v", duration)
 
 							} else {
 								returnError(response, http.StatusInternalServerError, "Unexpected error, unable to create JSON response object")
