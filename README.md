@@ -3,7 +3,7 @@
 A simple ShareX server written in Go
 
 **Preview**
-![](https://i.imgur.com/ST0MtPy.gif)
+![](https://i.imgur.com/IyUO5D2.gif)
 
 **Usage**
 
