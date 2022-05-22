@@ -51,7 +51,7 @@ func createHandlers(config Config) {
 
 	// Handle Routes
 	router.HandleFunc("/", StatsHandler)
-	router.HandleFunc("/upload", UploadHandler)
+	router.HandleFunc("/upload", UploadHandler).Methods("POST")
 	router.Handle("/{file}", http.FileServer(http.Dir("./files")))
 
 	// Listen for requests
@@ -107,7 +107,9 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 					// Generate a random file name + information
 					id, _ := gonanoid.Generate("ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz", config.Files.KeyLength)
 					name := id + ext
-					path := filepath.Join(".", config.Files.FilesPath, name)
+					path := filepath.Join("./", config.Files.FilesPath, name)
+
+					log.Info().Msgf("Attempting to create a file @ %v", path)
 
 					// Create the file
 					if createdFile, err := os.Create(path); err == nil {
