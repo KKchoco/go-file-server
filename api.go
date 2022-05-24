@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	bolt "go.etcd.io/bbolt"
 )
 
 const API_PATH = "/api"
@@ -19,9 +21,53 @@ type Request struct {
 	Password string               `form:"password"`
 }
 
+type File struct {
+	Name  string
+	Views int
+}
+
 func CreateAPI(r *gin.Engine) {
 	r.POST(API_PATH+"/upload", uploadHandler)
 	r.GET(API_PATH+"/:file", fileHandler)
+	r.GET(API_PATH+"/:file/stats", statsHandler)
+}
+
+func statsHandler(c *gin.Context) {
+	file := c.Param("file")
+
+	// Check if file exists
+	if _, err := os.Stat("./files/" + file); errors.Is(err, fs.ErrNotExist) {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"error": "File not found",
+		})
+		return
+	}
+
+	database.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte("files"))
+		if b == nil {
+			return errors.New("bucket does not exist")
+		}
+
+		data := File{}
+
+		// Umarshall the byte array encoded data into a struct
+		if err := json.Unmarshal(b.Get([]byte(file)), &data); err != nil {
+			fmt.Println(err)
+			data = File{
+				Name:  file,
+				Views: 0,
+			}
+		}
+
+		c.JSON(200, gin.H{
+			"name":  data.Name,
+			"views": data.Views,
+		})
+
+		return nil
+	})
 }
 
 func fileHandler(c *gin.Context) {
@@ -35,6 +81,39 @@ func fileHandler(c *gin.Context) {
 		return
 	}
 
+	// Increment in database
+	database.Update(func(tx *bolt.Tx) error {
+
+		b, err := tx.CreateBucketIfNotExists([]byte("files"))
+		if err != nil {
+			fmt.Println(err)
+			return errors.New("could not create bucket")
+		}
+
+		data := File{}
+
+		// Umarshall the byte array encoded data into a struct
+		if err := json.Unmarshal(b.Get([]byte(file)), &data); err != nil {
+			fmt.Println(err)
+			data = File{
+				Name:  file,
+				Views: 0,
+			}
+		}
+
+		// Modify Data
+		data.Views += 1
+
+		// Remarshall
+		encoded, err := json.Marshal(data)
+		if err != nil {
+			fmt.Println(err)
+			return errors.New("could not encode file")
+		}
+
+		return b.Put([]byte(data.Name), encoded)
+	})
+
 	c.File("./files/" + file)
 }
 
@@ -45,6 +124,14 @@ func uploadHandler(c *gin.Context) {
 	if err := c.Bind(&req); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": "Malformed request",
+		})
+		return
+	}
+
+	// Check if file name is too long
+	if len(req.File.Filename) > 255 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "File name too long",
 		})
 		return
 	}
@@ -99,7 +186,7 @@ func uploadHandler(c *gin.Context) {
 
 	// Return success with information
 	c.JSON(200, gin.H{
-		"url":  protocol + c.Request.Host + "/" + filename,
+		"url":  protocol + c.Request.Host + API_PATH + "/" + filename,
 		"size": req.File.Size,
 	})
 }

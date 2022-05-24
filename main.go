@@ -7,9 +7,12 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"go.etcd.io/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 var config Config
+var database *bbolt.DB
 
 func main() {
 
@@ -26,6 +29,15 @@ func main() {
 		return
 	}
 	config = c
+
+	// Handle database
+	db, err := bolt.Open("files.db", 0600, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer db.Close()
+	database = db
 
 	// Create router
 	r := gin.Default()
