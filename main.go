@@ -1,185 +1,141 @@
 package main
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
-	"io/ioutil"
-	"mime"
+	"io/fs"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
-	"github.com/gorilla/mux"
-	gonanoid "github.com/matoous/go-nanoid/v2"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/gin-gonic/gin"
 )
-
-const filesPath = "/files"
 
 var config Config
 
-type ResponseObject struct {
-	Name string
-	Url  string
-	Size uint
+type Request struct {
+	File     multipart.FileHeader `form:"file"`
+	Password string               `form:"password"`
 }
 
 func main() {
-
-	config = GetConfig()
-
-	// Configure console to display color
-	if config.Other.PrettyOutput {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	// Check if files folder exists, if not, create it
+	if _, err := os.Stat("./files"); errors.Is(err, fs.ErrNotExist) {
+		fmt.Println("./files folder does not exist, creating...")
+		if err := os.Mkdir("./files", 0755); err != nil {
+			fmt.Println("Error creating ./files folder")
+			return
+		}
 	}
 
-	// Validate config
-	if isValidConfig(config) {
-		DisplayConfig(config)
-		createHandlers(config)
-	} else {
-		log.Fatal().Msg("Aborting")
+	c, err := GetConfig()
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
+	config = c
+
+	r := gin.Default()
+	r.SetTrustedProxies(nil)
+
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"github": "https://github.com/lorencerri/sharex-server-golang",
+		})
+	})
+	r.POST("/upload", uploadHandler)
+	r.GET("/:file", func(c *gin.Context) {
+		file := c.Param("file")
+
+		// Check if file exists
+		if _, err := os.Stat("./files/" + file); errors.Is(err, fs.ErrNotExist) {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"error": "File not found",
+			})
+			return
+		}
+
+		c.File("./files/" + file)
+	})
+
+	addr := ""
+	if config.Server.Address != "" {
+		addr = config.Server.Address
+	}
+	if config.Server.Port != "" {
+		addr += ":" + config.Server.Port
+	}
+	if addr == "" {
+		addr = ":8080"
+	}
+
+	r.Run(addr)
+
 }
 
-func createHandlers(config Config) {
+func uploadHandler(c *gin.Context) {
 
-	// Create Router
-	router := mux.NewRouter()
-
-	// Handle Routes
-	router.HandleFunc("/", StatsHandler)
-	router.HandleFunc("/upload", UploadHandler).Methods("POST")
-	router.Handle("/{file}", http.FileServer(http.Dir("./files")))
-
-	// Listen for requests
-	address := config.Server.Address + ":" + config.Server.Port
-	log.Info().Msg("Listening for connections...")
-	http.ListenAndServe(address, router)
-}
-
-func StatsHandler(response http.ResponseWriter, request *http.Request) {
-	log.Info().Msg("Request received to stats handler")
-}
-
-func UploadHandler(response http.ResponseWriter, request *http.Request) {
-	log.Info().Msg("Beginning the upload process...")
-	start := time.Now()
-
-	// Validate the request's password
-	password := request.FormValue("password")
-	if len(config.Files.Password) > 0 && password != config.Files.Password {
-		returnError(response, http.StatusUnauthorized, "Invalid password provided in 'password' field of Form Data")
+	// Bind the request body to the struct
+	var req Request
+	if err := c.Bind(&req); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": "Malformed request",
+		})
 		return
 	}
 
-	// Calculate the file size in bytes
-	maxBytes := config.Files.MaxUploadSize << 20 // Megabytes -> Bytes Conversion
+	// Validate password if exists
+	if len(config.Files.Password) > 0 && req.Password != config.Files.Password {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"message": "Incorrect password",
+		})
+		return
+	}
 
-	// Limit the request's body size
-	request.Body = http.MaxBytesReader(response, request.Body, maxBytes)
+	// Check if Content-Length exceeds max size
+	if req.File.Size > config.Files.MaxUploadSize<<20 {
+		c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{
+			"message": fmt.Sprintf("Request or file too large (%v > %v)", req.File.Size, config.Files.MaxUploadSize<<20),
+		})
+		return
+	}
 
-	// Get the first file from the request
-	if file, fileHeader, err := request.FormFile("file"); err == nil {
-		defer file.Close() // When the enclosing function ends, close the file
-		log.Info().Msgf("File Size: %v", fileHeader.Size)
+	// Check if valid extension
+	ext := filepath.Ext(req.File.Filename)
+	if !Contains(config.Files.AllowedFileTypes, ext) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("File type not allowed (%v)", ext),
+		})
+		return
+	}
 
-		// Read the bytes and store it in a variable
-		if bytes, err := ioutil.ReadAll(file); err == nil {
-
-			// Get the file type based on the file's bytes
-			// This is better than getting the Content-Type from
-			// the fileHeader map as it can be changed by the user
-			contentType := http.DetectContentType(bytes)
-			log.Info().Msgf("File Type: %v", contentType)
-
-			// Get the string file extension based on the content type
-			extensions, err := mime.ExtensionsByType(contentType)
-			if err == nil {
-				ext := extensions[0] // Get the first extension
-				log.Info().Msgf("File Extension: %v", ext)
-
-				// Check if the file type is included in the allowed file types
-				if contains(config.Files.AllowedFileTypes, ext) {
-
-					// Generate a random file name + information
-					id, _ := gonanoid.Generate("ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz", config.Files.KeyLength)
-					name := id + ext
-					path := filepath.Join("./", config.Files.FilesPath, name)
-
-					log.Info().Msgf("Attempting to create a file @ %v", path)
-
-					// Create the file
-					if createdFile, err := os.Create(path); err == nil {
-						defer createdFile.Close() // When the enclosing function ends, close the file
-
-						// Write the bytes to the file
-						if _, err := createdFile.Write(bytes); err == nil {
-
-							// Determine protocol based on config
-							protocol := ""
-							if config.Server.HTTPS {
-								protocol = "https://"
-							} else {
-								protocol = "http://"
-							}
-
-							// Create response object to be passed
-							jsonObj := ResponseObject{
-								Name: name,
-								Url:  protocol + request.Host + "/" + name,
-								Size: uint(fileHeader.Size),
-							}
-
-							if jsonResp, err := json.Marshal(jsonObj); err == nil {
-								log.Info().Msgf("Created file with url: %v", jsonObj.Url)
-
-								// Return JSON object of information
-								response.Header().Set("Content-Type", "application/json")
-								response.WriteHeader(http.StatusOK)
-								response.Write(jsonResp)
-
-								duration := time.Since(start)
-								log.Info().Msgf("Captured and uploaded image in %v", duration)
-
-							} else {
-								returnError(response, http.StatusInternalServerError, "Unexpected error, unable to create JSON response object")
-							}
-						} else {
-							returnError(response, http.StatusInternalServerError, "Unexpected error, unable to write to the created file")
-						}
-					} else {
-						returnError(response, http.StatusInternalServerError, "Unexpected error, unable to create a new file")
-					}
-				} else {
-					returnError(response, http.StatusInternalServerError, fmt.Sprintf("The extension %v is not in the predefined list of allowed extensions", ext))
-				}
-			} else {
-				returnError(response, http.StatusInternalServerError, fmt.Sprintf("Unable to get file extension of Content-Type %v", contentType))
-			}
-		} else {
-			returnError(response, http.StatusInternalServerError, "Unexpected error, unable to read the file")
-		}
+	// Generate random file name
+	filename := ""
+	if config.Files.ObfuscateFileNames {
+		filename = RandString(10) + ext
 	} else {
-		returnError(response, http.StatusBadRequest, fmt.Sprintf("The file size is limited to %v Bytes, although the approx. size of the request was %v Bytes", maxBytes, request.ContentLength))
-	}
-}
-
-func returnError(w http.ResponseWriter, code int, message string) {
-	w.WriteHeader(code)
-	w.Write([]byte(message))
-	log.Error().Msgf("HTTP Error %v: %v", code, message)
-}
-
-// https://freshman.tech/snippets/go/check-if-slice-contains-element/
-func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
+		filename = req.File.Filename
 	}
 
-	return false
+	// Save file to location
+	if err := c.SaveUploadedFile(&req.File, "./files/"+filename); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": "Error saving file",
+		})
+	}
+
+	// Determine protocol based on config
+	protocol := ""
+	if config.Server.HTTPS {
+		protocol = "https://"
+	} else {
+		protocol = "http://"
+	}
+
+	// Return success with information
+	c.JSON(200, gin.H{
+		"url":  protocol + c.Request.Host + "/" + filename,
+		"size": req.File.Size,
+	})
 }

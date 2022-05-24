@@ -8,7 +8,8 @@ files:
     maxUploadSize: 20
     keyLength: 7
     password: "changeMe!" # Password required for uploading, leave empty for no password
-    allowedFileTypes:
+    obfuscateFileNames: true # Setting to false may result in "File already exists" errors
+    allowedFileTypes: # Leave empty to allow all files
         [
             .png,
             .jpg,

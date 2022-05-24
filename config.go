@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -20,18 +20,19 @@ type ServerConfig struct {
 }
 
 type FilesConfig struct {
-	FilesPath        string
-	MaxUploadSize    int64
-	KeyLength        int
-	Password         string
-	AllowedFileTypes []string
+	FilesPath          string
+	MaxUploadSize      int64
+	KeyLength          int
+	Password           string
+	ObfuscateFileNames bool
+	AllowedFileTypes   []string
 }
 
 type OtherConfig struct {
 	PrettyOutput bool
 }
 
-func GetConfig() Config {
+func GetConfig() (Config, error) {
 	var config Config
 
 	// Set config.yml information
@@ -51,37 +52,8 @@ func GetConfig() Config {
 
 	// Assert config file to config variable
 	if err := viper.Unmarshal(&config); err != nil {
-		log.Fatal().Err(err).Msg("Unable to convert config.yml into struct")
+		return config, errors.New("error unmarshalling config file")
 	}
 
-	return config
-}
-
-func isValidConfig(config Config) bool {
-	errCount := 0
-
-	if len(config.Server.Address) == 0 {
-		log.Error().Msg("server.address is required")
-		errCount += 1
-	}
-	if len(config.Server.Port) == 0 {
-		log.Error().Msg("server.port is required")
-		errCount += 1
-	}
-	if len(config.Files.FilesPath) == 0 {
-		log.Error().Msg("files.filesPath is required")
-		errCount += 1
-	}
-
-	if errCount > 0 {
-		log.Fatal().Msgf("%v errors occured while parsing config.yml", errCount)
-		return false
-	} else {
-		return true
-	}
-}
-
-func DisplayConfig(config Config) {
-	log.Info().Msg("Loaded config!")
-	log.Info().Msgf("%+v", config)
+	return config, nil
 }
