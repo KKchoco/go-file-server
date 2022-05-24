@@ -113,7 +113,7 @@ func uploadHandler(c *gin.Context) {
 	// Generate random file name
 	filename := ""
 	if config.Files.ObfuscateFileNames {
-		filename = RandString(10) + ext
+		filename = RandString(config.Files.KeyLength) + ext
 	} else {
 		filename = req.File.Filename
 	}
