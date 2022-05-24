@@ -1,6 +1,6 @@
 # go-file-server
 
-A simple ShareX server written in Go
+A simple file server written in Go, designed for ShareX
 
 **Preview**
 ![](https://i.imgur.com/IyUO5D2.gif)
