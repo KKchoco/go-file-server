@@ -16,9 +16,10 @@ A simple file server written in Go, designed for ShareX
 **API**
 | Method | Endpoint |
 | ---: | :--- |
+| POST | /api/upload |
 | GET | /api/{file} |
 | GET | /api/{file}/stats |
-| POST | /api/upload |
+| GET | /api/{file}/delete/{key} |
 
 **TODO**
 

@@ -22,14 +22,16 @@ type Request struct {
 }
 
 type File struct {
-	Name  string
-	Views int
+	Name    string
+	Views   int
+	EditKey string
 }
 
 func CreateAPI(r *gin.Engine) {
 	r.POST(API_PATH+"/upload", uploadHandler)
 	r.GET(API_PATH+"/:file", fileHandler)
 	r.GET(API_PATH+"/:file/stats", statsHandler)
+	r.GET(API_PATH+"/:file/delete/:key", deleteHandler)
 }
 
 func statsHandler(c *gin.Context) {
@@ -64,6 +66,62 @@ func statsHandler(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"name":  data.Name,
 			"views": data.Views,
+		})
+
+		return nil
+	})
+}
+
+func deleteHandler(c *gin.Context) {
+	file := c.Param("file")
+	key := c.Param("key")
+
+	// Check if file exists
+	if _, err := os.Stat("./files/" + file); errors.Is(err, fs.ErrNotExist) {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"error": "File not found",
+		})
+		return
+	}
+
+	database.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte("files"))
+		if b == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Bucket does not exist",
+			})
+			return nil
+		}
+
+		data := File{}
+
+		// Umarshall the byte array encoded data into a struct
+		if err := json.Unmarshal(b.Get([]byte(file)), &data); err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "File does not exist",
+			})
+			return nil
+		}
+
+		// Check if key is the same
+		if data.EditKey != key {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalid key",
+			})
+			return nil
+		}
+
+		// Delete file locally
+		if err := os.Remove("./files/" + file); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Could not delete file",
+			})
+			return nil
+		}
+
+		c.JSON(200, gin.H{
+			"success": "File deleted",
 		})
 
 		return nil
@@ -184,9 +242,39 @@ func uploadHandler(c *gin.Context) {
 		protocol = "http://"
 	}
 
-	// Return success with information
-	c.JSON(200, gin.H{
-		"url":  protocol + c.Request.Host + API_PATH + "/" + filename,
-		"size": req.File.Size,
+	url := protocol + c.Request.Host + API_PATH + "/" + filename
+
+	database.Update(func(tx *bolt.Tx) error {
+
+		b, err := tx.CreateBucketIfNotExists([]byte("files"))
+		if err != nil {
+			fmt.Println(err)
+			return errors.New("could not create bucket")
+		}
+
+		editKey := RandString(20)
+
+		data := File{
+			Name:    filename,
+			Views:   0,
+			EditKey: editKey,
+		}
+
+		// Return success with information
+		c.JSON(200, gin.H{
+			"url":         protocol + c.Request.Host + API_PATH + "/" + filename,
+			"deletionUrl": url + "/delete/" + editKey,
+			"size":        req.File.Size,
+		})
+
+		// Remarshall
+		encoded, err := json.Marshal(data)
+		if err != nil {
+			fmt.Println(err)
+			return errors.New("could not encode file")
+		}
+
+		return b.Put([]byte(data.Name), encoded)
 	})
+
 }

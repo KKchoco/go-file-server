@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.etcd.io/bbolt"
-	bolt "go.etcd.io/bbolt"
 )
 
 var config Config
@@ -31,7 +30,7 @@ func main() {
 	config = c
 
 	// Handle database
-	db, err := bolt.Open("files.db", 0600, nil)
+	db, err := bbolt.Open("files.db", 0600, nil)
 	if err != nil {
 		fmt.Println(err)
 		return
