@@ -7,7 +7,7 @@ A simple file server written in Go, designed for ShareX
 
 **Usage**
 
-1. Install [Go](https://go.dev)
+1. Install [Go](https://go.dev) ([Ubuntu](https://github.com/golang/go/wiki/Ubuntu))
 2. Clone repo `git clone https://github.com/lorencerri/sharex-server-golang`
 3. Install dependencies `go get`
 4. Copy & modify `example.config.yml` -> `config.yml`
