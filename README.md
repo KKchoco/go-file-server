@@ -1,4 +1,4 @@
-# sharex-server-golang
+# go-file-server
 
 A simple ShareX server written in Go
 
