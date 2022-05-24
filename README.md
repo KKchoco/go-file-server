@@ -13,6 +13,13 @@ A simple file server written in Go, designed for ShareX
 4. Copy & modify `example.config.yml` -> `config.yml`
 5. Run program `go run .`
 
+**API**
+| Method | Endpoint |
+| :---: | :---: |
+| GET | /api/{file} |
+| GET | /api/{file}/stats |
+| POST | /api/upload |
+
 **TODO**
 
 -   Frontend & move API to /api/ endpoint
