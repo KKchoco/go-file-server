@@ -12,3 +12,8 @@ A simple file server written in Go, designed for ShareX
 3. Install dependencies `go get`
 4. Copy & modify `example.config.yml` -> `config.yml`
 5. Run program `go run .`
+
+**TODO**
+
+-   Frontend & move API to /api/ endpoint
+-   File stats
