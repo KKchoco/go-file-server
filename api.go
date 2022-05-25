@@ -29,9 +29,43 @@ type File struct {
 
 func CreateAPI(r *gin.Engine) {
 	r.POST(API_PATH+"/upload", uploadHandler)
+	r.GET(API_PATH+"/directory/:password", directoryHandler)
 	r.GET(API_PATH+"/:file", fileHandler)
 	r.GET(API_PATH+"/:file/stats", statsHandler)
 	r.GET(API_PATH+"/:file/delete/:key", deleteHandler)
+	r.StaticFile("/", "./index.html")
+}
+
+func directoryHandler(c *gin.Context) {
+	password := c.Param("password")
+
+	if password != config.Files.AdminPassword {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "Invalid password",
+		})
+		return
+	}
+
+	files := []string{}
+	err := filepath.Walk("./files", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			files = append(files, info.Name())
+		}
+		return nil
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"files": files,
+	})
 }
 
 func statsHandler(c *gin.Context) {

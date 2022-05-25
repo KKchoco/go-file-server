@@ -26,6 +26,7 @@ type FilesConfig struct {
 	Password           string
 	ObfuscateFileNames bool
 	AllowedFileTypes   []string
+	AdminPassword      string
 }
 
 type OtherConfig struct {

@@ -43,11 +43,6 @@ func main() {
 	r.SetTrustedProxies(nil)
 
 	// Create routes
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"github": "https://github.com/lorencerri/sharex-server-golang",
-		})
-	})
 	CreateAPI(r)
 
 	r.Run(getAddr())
