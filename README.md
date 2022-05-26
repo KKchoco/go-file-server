@@ -10,8 +10,8 @@ A simple file server written in Go, designed for ShareX
 - Optional filetype restrictions
 
 ## Preview
-![https://fs.plexidev.org/api/pICAQZm.gif](https://fs.plexidev.org/api/pICAQZm.gif)
-![https://i.imgur.com/IyUO5D2.gif](https://i.imgur.com/IyUO5D2.gif)
+[![](https://fs.plexidev.org/api/pICAQZm.gif)](https://fs.plexidev.org/api/pICAQZm.gif)
+[![](https://i.imgur.com/IyUO5D2.gif)](https://i.imgur.com/IyUO5D2.gif)
 
 ## Usage
 
