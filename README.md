@@ -13,7 +13,7 @@ A simple file server written in Go, designed for ShareX
 ## Preview
 
 [![](https://fs.plexidev.org/api/pICAQZm.gif)](https://fs.plexidev.org/api/pICAQZm.gif)
-[![](https://fs.plexidev.org/api/ahYHMSG.gif)](https://fs.plexidev.org/api/ahYHMSG.gif)
+<a href="https://fs.plexidev.org/api/ahYHMSG.gif">![](https://fs.plexidev.org/api/ahYHMSG.gif)</a>
 
 ## Usage
 
