@@ -21,6 +21,32 @@ function displayError(title, message) {
 	}
 }
 
+function downloadShareXConfig() {
+	let password = passwordInput.value;
+	if (!password) {
+		return alert("Please enter the upload password on the right before downloading the ShareX config.");
+	}
+	var a = document.createElement("a");
+	var file = new Blob([JSON.stringify({
+		"Version": "13.7.0",
+		"Name": `go-file-server [${window.location.origin}]`,
+		"DestinationType": "ImageUploader, FileUploader",
+		"RequestMethod": "POST",
+		"RequestURL": `${window.location.origin}/api/upload`,
+		"Body": "MultipartFormData",
+		"Arguments": {
+			"password": password
+		},
+		"FileFormName": "file",
+		"URL": "$json:url$",
+		"DeletionURL": "$json:deletionUrl$",
+		"ErrorMessage": "$json:error$"
+	})], { type: 'text/plain' });
+	a.href = URL.createObjectURL(file);
+	a.download = "ShareX Config for go-file-server.sxcu";
+	a.click();
+}
+
 function getFiles() {
 	let adminPassword = adminPasswordInput.value || 'invalid';
 	document.querySelector('#files-response-container').innerHTML = '';
