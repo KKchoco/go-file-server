@@ -6,6 +6,7 @@ A simple file server written in Go, designed for ShareX
 
 -   Quick & easy setup
 -   Easy to use dashboard
+-   Download ShareX config button
 -   Password protected uploading
 -   Optional filetype restrictions
 
