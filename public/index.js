@@ -23,6 +23,7 @@ function displayError(title, message) {
 
 function getFiles() {
 	let adminPassword = adminPasswordInput.value || 'invalid';
+	document.querySelector('#files-response-container').innerHTML = '';
 
 	// Get files from api
 	fetch('/api/files/' + adminPassword).then(response => {
@@ -38,7 +39,7 @@ function getFiles() {
 						appendFile("files-response-container", {
 							filename: data[i].Name,
 							url: `${window.location.origin}/api/${data[i].Name}`,
-							deletionUrl: `${window.location.origin}/api/${data[i].File}/delete/${data[i].EditKey}`,
+							deletionUrl: `${window.location.origin}/api/${data[i].Name}/delete/${data[i].EditKey}`,
 							subtext: `${data[i].Views} views`
 						})
 					}

@@ -198,7 +198,7 @@ func fileHandler(c *gin.Context) {
 		}
 
 		// Modify Data
-		data.Views += 1
+		data.Views = data.Views + 1
 
 		// Remarshall
 		encoded, err := json.Marshal(data)
