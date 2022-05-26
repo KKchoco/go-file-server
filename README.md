@@ -29,8 +29,3 @@ A simple file server written in Go, designed for ShareX
 | GET | /api/{fileName}/stats |
 | GET | /api/{fileName}/delete/{editKey} |
 | GET | /api/files/{adminPassword} |
-
-## TODO
-
--   Frontend & move API to /api/ endpoint
--   File stats
