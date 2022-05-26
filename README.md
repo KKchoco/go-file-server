@@ -4,14 +4,15 @@ A simple file server written in Go, designed for ShareX
 
 ## Features
 
-- Quick & easy setup
-- Easy to use dashboard
-- Password protected uploading
-- Optional filetype restrictions
+-   Quick & easy setup
+-   Easy to use dashboard
+-   Password protected uploading
+-   Optional filetype restrictions
 
 ## Preview
+
 [![](https://fs.plexidev.org/api/pICAQZm.gif)](https://fs.plexidev.org/api/pICAQZm.gif)
-[![](https://i.imgur.com/IyUO5D2.gif)](https://i.imgur.com/IyUO5D2.gif)
+[![](https://fs.plexidev.org/api/ahYHMSG.gif)](https://fs.plexidev.org/api/ahYHMSG.gif)
 
 ## Usage
 
@@ -22,10 +23,11 @@ A simple file server written in Go, designed for ShareX
 5. Run program `go run .`
 
 ## API
-| Method | Endpoint |
-| ---: | :--- |
-| POST | /api/upload |
-| GET | /api/{fileName} |
-| GET | /api/{fileName}/stats |
-| GET | /api/{fileName}/delete/{editKey} |
-| GET | /api/files/{adminPassword} |
+
+| Method | Endpoint                         |
+| -----: | :------------------------------- |
+|   POST | /api/upload                      |
+|    GET | /api/{fileName}                  |
+|    GET | /api/{fileName}/stats            |
+|    GET | /api/{fileName}/delete/{editKey} |
+|    GET | /api/files/{adminPassword}       |
