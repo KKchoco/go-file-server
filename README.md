@@ -6,13 +6,14 @@ A simple file server written in Go, designed for ShareX
 
 -   Quick & easy setup
 -   Easy to use dashboard
+-   Download ShareX config button
 -   Password protected uploading
 -   Optional filetype restrictions
 
 ## Preview
 
-[![](https://fs.plexidev.org/api/pICAQZm.gif)](https://fs.plexidev.org/api/pICAQZm.gif)
-[![](https://fs.plexidev.org/api/ahYHMSG.gif)](https://fs.plexidev.org/api/ahYHMSG.gif)
+[<img alt="demo_gif" src="https://fs.plexidev.org/api/pICAQZm.gif" />](https://fs.plexidev.org/api/pICAQZm.gif)
+[<img alt="demo_gif" src="https://fs.plexidev.org/api/ahYHMSG.gif" />](https://fs.plexidev.org/api/ahYHMSG.gif)
 
 ## Usage
 
