@@ -1,4 +1,3 @@
-// Elements
 const uploadInput = document.querySelector('#hidden-upload');
 const adminPasswordInput = document.querySelector('#admin-password');
 const passwordInput = document.querySelector('#password')
@@ -7,11 +6,9 @@ const errorTitle = document.querySelector('#error-title');
 const errorMessage = document.querySelector('#error-message');
 const displayFilesButton = document.querySelector('#display-files');
 
-// Event Handlers
 uploadInput.addEventListener('change', upload)
 displayFilesButton.addEventListener('click', getFiles)
 
-// Functions
 function displayError(title, message) {
 	if (!title) errorDiv.style.display = 'none';
 	else {
@@ -51,7 +48,6 @@ function getFiles() {
 	let adminPassword = adminPasswordInput.value || 'invalid';
 	document.querySelector('#files-response-container').innerHTML = '';
 
-	// Get files from api
 	fetch('/api/files/' + adminPassword).then(response => {
 		displayError()
 
@@ -61,7 +57,6 @@ function getFiles() {
 			response.json().then(data => {
 				if (data instanceof Array) {
 					for (let i = 0; i < data.length; i++) {
-						console.log(data[i])
 						appendFile("files-response-container", {
 							filename: data[i].Name,
 							url: `${window.location.origin}/api/${data[i].Name}`,
@@ -74,6 +69,8 @@ function getFiles() {
 		}
 		else if (status === 401) {
 			displayError('Unauthorized', 'The admin password you entered was invalid.');
+		} else {
+			displayError(`Error ${status}`, 'An error occurred while trying to get the files.');
 		}
 
 	});
@@ -94,7 +91,6 @@ function upload() {
 	for (let i = 0; i < files.length; i++) {
 		let file = files[i];
 
-		// Upload file to api
 		let formData = new FormData();
 		formData.append('file', file);
 		formData.append('password', password);
@@ -105,13 +101,17 @@ function upload() {
 			displayError()
 
 			let status = response.status;
-			if (status === 200) {
-				response.json().then(data => {
+			response.json().then(data => {
+				if (status === 200) {
 					appendFile("upload-response-container", { subtext: `${data.size} bytes`, ...data })
-				});
-			} else if (status === 401) {
-				displayError('Unauthorized', 'The password you entered was invalid.');
-			}
+				} else if (status === 401) {
+					displayError('Unauthorized', 'The password you entered was invalid.');
+				} else {
+					if (data.error) {
+						displayError(`Error ${status}`, data.error);
+					} else displayError(`Error ${status}`, 'Unknown Error');
+				}
+			});
 		});
 
 	}
