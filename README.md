@@ -9,7 +9,7 @@ A simple file server written in Go, designed for ShareX
 - Password protected uploading
 - Optional filetype restrictions
 
-**Preview**
+## Preview
 ![](https://i.imgur.com/IyUO5D2.gif)
 ![](https://fs.plexidev.org/api/pICAQZm.gif)
 
