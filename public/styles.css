@@ -1,0 +1,28 @@
+body {
+    background-color: #111111ff;
+    color: #ffffffff;
+}
+
+#main {
+    padding: 20px;
+}
+
+#hidden-upload {
+    display: none;
+}
+
+#upload-container > * {
+    margin-left: 0px;
+    margin-right: 0px;
+    padding-right: 0px;
+    padding-top: 10px;
+}
+
+#password-input {
+    padding-top: 1px;
+    margin-right: 5px;
+}
+
+.subtext {
+    color: gray;
+}

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	bolt "go.etcd.io/bbolt"
 )
@@ -29,14 +30,14 @@ type File struct {
 
 func CreateAPI(r *gin.Engine) {
 	r.POST(API_PATH+"/upload", uploadHandler)
-	r.GET(API_PATH+"/directory/:password", directoryHandler)
+	r.GET(API_PATH+"/files/:password", filesHandler)
 	r.GET(API_PATH+"/:file", fileHandler)
 	r.GET(API_PATH+"/:file/stats", statsHandler)
 	r.GET(API_PATH+"/:file/delete/:key", deleteHandler)
-	r.StaticFile("/", "./index.html")
+	r.Use(static.Serve("/", static.LocalFile("./public", true)))
 }
 
-func directoryHandler(c *gin.Context) {
+func filesHandler(c *gin.Context) {
 	password := c.Param("password")
 
 	if password != config.Files.AdminPassword {
@@ -46,25 +47,28 @@ func directoryHandler(c *gin.Context) {
 		return
 	}
 
-	files := []string{}
-	err := filepath.Walk("./files", func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+	database.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte("files"))
+		if b == nil {
+			return errors.New("bucket does not exist")
 		}
-		if !info.IsDir() {
-			files = append(files, info.Name())
+
+		data := File{}
+		files := []File{}
+
+		if err := b.ForEach(func(k, v []byte) error {
+			if err := json.Unmarshal(v, &data); err != nil {
+				return err
+			}
+			files = append(files, data)
+			return nil
+		}); err != nil {
+			return errors.New("could not iterate over bucket")
 		}
+		c.JSON(200, files)
+
 		return nil
-	})
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err,
-		})
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"files": files,
 	})
 }
 
@@ -296,6 +300,7 @@ func uploadHandler(c *gin.Context) {
 
 		// Return success with information
 		c.JSON(200, gin.H{
+			"filename":    filename,
 			"url":         protocol + c.Request.Host + API_PATH + "/" + filename,
 			"deletionUrl": url + "/delete/" + editKey,
 			"size":        req.File.Size,
