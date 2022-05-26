@@ -107,6 +107,7 @@ function upload() {
 				} else if (status === 401) {
 					displayError('Unauthorized', 'The password you entered was invalid.');
 				} else {
+					console.log(data)
 					if (data.error) {
 						displayError(`Error ${status}`, data.error);
 					} else displayError(`Error ${status}`, 'Unknown Error');

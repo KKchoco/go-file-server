@@ -250,7 +250,7 @@ func uploadHandler(c *gin.Context) {
 
 	// Check if valid extension
 	ext := filepath.Ext(req.File.Filename)
-	if !Contains(config.Files.AllowedFileTypes, ext) {
+	if len(config.Files.AllowedFileTypes) > 0 && !Contains(config.Files.AllowedFileTypes, ext) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("File type not allowed (%v)", ext),
 		})
