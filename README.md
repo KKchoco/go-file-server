@@ -12,8 +12,8 @@ A simple file server written in Go, designed for ShareX
 
 ## Preview
 
-<a href="https://fs.plexidev.org/api/pICAZQm.gif">![](https://fs.plexidev.org/api/pICAQZm.gif)</a>
-<a href="https://fs.plexidev.org/api/ahYHMSG.gif">![](https://fs.plexidev.org/api/ahYHMSG.gif)</a>
+![](https://fs.plexidev.org/api/pICAQZm.gif)
+![](https://fs.plexidev.org/api/ahYHMSG.gif)
 
 ## Usage
 
