@@ -2,7 +2,8 @@
 
 A simple file server written in Go, designed for ShareX
 
-**Features**
+## Features
+
 - Quick & easy setup
 - Easy to use dashboard
 - Password protected uploading
@@ -12,7 +13,7 @@ A simple file server written in Go, designed for ShareX
 ![](https://i.imgur.com/IyUO5D2.gif)
 ![](https://fs.plexidev.org/api/pICAQZm.gif)
 
-**Usage**
+## Usage
 
 1. Install [Go](https://go.dev) ([Ubuntu](https://github.com/golang/go/wiki/Ubuntu))
 2. Clone repo `git clone https://github.com/lorencerri/sharex-server-golang`
@@ -20,15 +21,16 @@ A simple file server written in Go, designed for ShareX
 4. Copy & modify `example.config.yml` -> `config.yml`
 5. Run program `go run .`
 
-**API**
+## API
 | Method | Endpoint |
 | ---: | :--- |
 | POST | /api/upload |
-| GET | /api/{file} |
-| GET | /api/{file}/stats |
-| GET | /api/{file}/delete/{key} |
+| GET | /api/{fileName} |
+| GET | /api/{fileName}/stats |
+| GET | /api/{fileName}/delete/{editKey} |
+| GET | /api/files/{adminPassword} |
 
-**TODO**
+## TODO
 
 -   Frontend & move API to /api/ endpoint
 -   File stats
