@@ -17,6 +17,7 @@ type ServerConfig struct {
 	Address string
 	Port    string
 	HTTPS   bool
+	Domain string
 }
 
 type FilesConfig struct {
@@ -27,6 +28,7 @@ type FilesConfig struct {
 	ObfuscateFileNames bool
 	AllowedFileTypes   []string
 	AdminPassword      string
+    SuperKey    string
 }
 
 type OtherConfig struct {

@@ -1,15 +1,17 @@
 server:
-    address: 127.0.0.1
+    address: 0.0.0.0
     port: 8080
-    https: false # Whether or not the returning url should be HTTPS or not
+    https: true # Whether or not the returning url should be HTTPS or not
+    domain: "example.com" # To set superkey cookie
 
 files:
-    filesPath: /files
-    maxUploadSize: 20
-    keyLength: 7
+    filesPath: "/mnt/wdgreen/uploads/"
+    maxUploadSize: 1024 # In megabytes
+    keyLength: 4 # Four chars are enough to make 13845841 unique filenames within one file extension because dictionary we use to generate filenames has 61 chars, so 61^4 = 13845841
     password: "changeMe!" # Password required for uploading, leave empty for no password
     adminPassword: "changeMe!" # Password required for using some dashboard features
     obfuscateFileNames: true # Setting to false may result in "File already exists" errors
+    superkey: "" # Key that saves as cookie on valid adminPassword to upload and use dashboard without password, can be anything. ex. "91cf9344-eafe-4d20-89c9-f68cf0a5f8da"
     allowedFileTypes: # Leave empty to allow all files
         [
             .png,

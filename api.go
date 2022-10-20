@@ -9,13 +9,15 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-
+    "time"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+
 	bolt "go.etcd.io/bbolt"
 )
 
-const API_PATH = "/api"
+//const GIN_MODE = "release"
+const API_PATH = "/"
 
 type Request struct {
 	File     multipart.FileHeader `form:"file"`
@@ -26,6 +28,7 @@ type File struct {
 	Name    string
 	Views   int
 	EditKey string
+    UDate int64
 }
 
 func CreateAPI(r *gin.Engine) {
@@ -34,17 +37,26 @@ func CreateAPI(r *gin.Engine) {
 	r.GET(API_PATH+"/:file", fileHandler)
 	r.GET(API_PATH+"/:file/stats", statsHandler)
 	r.GET(API_PATH+"/:file/delete/:key", deleteHandler)
-	r.Use(static.Serve("/", static.LocalFile("./public", true)))
+    r.GET(API_PATH+"/", redir)
+	r.Use(static.Serve("/public/", static.LocalFile("./public", true)))
+}
+
+func redir(c *gin.Context) {
+    c.Redirect(http.StatusFound, "/public/")
+    return
 }
 
 func filesHandler(c *gin.Context) {
 	password := c.Param("password")
-
+    cookie, _ := c.Cookie("sskey")
+    //print(cookie)
+    if cookie != config.Files.SuperKey {
 	if password != config.Files.AdminPassword {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "Invalid password",
 		})
 		return
+	}
 	}
 
 	database.View(func(tx *bolt.Tx) error {
@@ -56,7 +68,7 @@ func filesHandler(c *gin.Context) {
 
 		data := File{}
 		files := []File{}
-
+        c.SetCookie("sskey", config.Files.SuperKey, 60*60*60*30, "/", config.Server.Domain, true, false) // set cookie for 75 days
 		if err := b.ForEach(func(k, v []byte) error {
 			if err := json.Unmarshal(v, &data); err != nil {
 				return err
@@ -66,6 +78,7 @@ func filesHandler(c *gin.Context) {
 		}); err != nil {
 			return errors.New("could not iterate over bucket")
 		}
+		//print(c.ClientIP())
 		c.JSON(200, files)
 
 		return nil
@@ -76,7 +89,7 @@ func statsHandler(c *gin.Context) {
 	file := c.Param("file")
 
 	// Check if file exists
-	if _, err := os.Stat("./files/" + file); errors.Is(err, fs.ErrNotExist) {
+	if _, err := os.Stat(config.Files.FilesPath + file); errors.Is(err, fs.ErrNotExist) {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"error": "File not found",
 		})
@@ -115,7 +128,7 @@ func deleteHandler(c *gin.Context) {
 	key := c.Param("key")
 
 	// Check if file exists
-	if _, err := os.Stat("./files/" + file); errors.Is(err, fs.ErrNotExist) {
+	if _, err := os.Stat(config.Files.FilesPath + file); errors.Is(err, fs.ErrNotExist) {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"error": "File not found",
 		})
@@ -151,7 +164,7 @@ func deleteHandler(c *gin.Context) {
 		}
 
 		// Delete file locally
-		if err := os.Remove("./files/" + file); err != nil {
+		if err := os.Remove(config.Files.FilesPath + file); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Could not delete file",
 			})
@@ -170,7 +183,7 @@ func fileHandler(c *gin.Context) {
 	file := c.Param("file")
 
 	// Check if file exists
-	if _, err := os.Stat("./files/" + file); errors.Is(err, fs.ErrNotExist) {
+	if _, err := os.Stat(config.Files.FilesPath + file); errors.Is(err, fs.ErrNotExist) {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"error": "File not found",
 		})
@@ -210,7 +223,7 @@ func fileHandler(c *gin.Context) {
 		return b.Put([]byte(data.Name), encoded)
 	})
 
-	c.File("./files/" + file)
+	c.File(config.Files.FilesPath + file)
 }
 
 func uploadHandler(c *gin.Context) {
@@ -231,7 +244,10 @@ func uploadHandler(c *gin.Context) {
 		})
 		return
 	}
-
+	cookie, err := c.Cookie("sskey")
+      print(err)
+      //print(cookie)
+      if cookie != config.Files.SuperKey {
 	// Validate password if exists
 	if len(config.Files.Password) > 0 && req.Password != config.Files.Password {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -239,6 +255,7 @@ func uploadHandler(c *gin.Context) {
 		})
 		return
 	}
+    }
 
 	// Check if Content-Length exceeds max size
 	if req.File.Size > config.Files.MaxUploadSize<<20 {
@@ -257,16 +274,22 @@ func uploadHandler(c *gin.Context) {
 		return
 	}
 
-	// Generate random file name
+	// Generate random file name and check if it does not exist
 	filename := ""
 	if config.Files.ObfuscateFileNames {
-		filename = RandString(config.Files.KeyLength) + ext
+		sum := 0
+		for sum < 1 {
+			filename = RandString(config.Files.KeyLength) + ext
+			if _, err := os.Stat(config.Files.FilesPath + filename); errors.Is(err, fs.ErrNotExist) {
+				sum = sum + 1
+			}
+		}
 	} else {
 		filename = req.File.Filename
 	}
 
 	// Save file to location
-	if err := c.SaveUploadedFile(&req.File, "./files/"+filename); err != nil {
+	if err := c.SaveUploadedFile(&req.File, config.Files.FilesPath+filename); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "Could not save file",
 		})
@@ -280,7 +303,7 @@ func uploadHandler(c *gin.Context) {
 		protocol = "http://"
 	}
 
-	url := protocol + c.Request.Host + API_PATH + "/" + filename
+	url := protocol + c.Request.Host + API_PATH + filename
 
 	database.Update(func(tx *bolt.Tx) error {
 
@@ -296,14 +319,16 @@ func uploadHandler(c *gin.Context) {
 			Name:    filename,
 			Views:   0,
 			EditKey: editKey,
+			UDate: time.Now().Unix(),
 		}
 
 		// Return success with information
 		c.JSON(200, gin.H{
 			"filename":    filename,
-			"url":         protocol + c.Request.Host + API_PATH + "/" + filename,
+			"url":         protocol + c.Request.Host + API_PATH + filename,
 			"deletionUrl": url + "/delete/" + editKey,
 			"size":        req.File.Size,
+			"date":        time.Now().Unix(),
 		})
 
 		// Remarshall

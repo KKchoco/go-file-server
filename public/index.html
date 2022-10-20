@@ -2,94 +2,38 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-        <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css"
-        />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0" />
         <title>go-file-server</title>
-        <link rel="stylesheet" href="styles.css" />
-        <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
-        <script
-            type="text/javascript"
-            src="https://cdn.socket.io/socket.io-1.4.5.js"
-        ></script>
+        <style>@media (max-width: 450px){.ui.text.container{min-width:500px!important}}.ui.header>.icon,.ui.header>.icon+.content,div#textnode{vertical-align:middle;display:table-cell}div#textnode{transition:font-size 175ms}.button{font-size:1rem}.ui.button{display:inline-block}.ui.inverted.button{box-shadow:0 0 0 2px #fff inset;background:0 0;color:#fff}.ui.input>input{padding-top:10px;padding:.9em 1em;background:#fff;border:none;border-radius:.3rem}.ui.labeled.icon.button{padding-left:1em!important;padding-right:1em!important}.ui.inverted.label,.ui.inverted.list .item a:not(.ui){color:rgba(255,255,255,.9)!important}.ui.button{background:#e0e1e2;color:#00000099;padding:.5em;font-weight:700;border-radius:.3rem}.ui.button,a,a:hover{text-decoration:none}.ui.list>.item [class*="right floated"]{float:right;margin:0 0 0 1em}.ui.text.container,h1.ui.header .sub.header,h2.ui.header .sub.header{font-size:1.14rem}.ui.list{margin:1em 0}body{color:#fff;font:14px Lato,'Helvetica Neue',Arial,Helvetica,sans-serif}div#dropzone{position:fixed;top:0;left:0;z-index:9999999999;width:100%;height:100%;transition:visibility 175ms,opacity 175ms;display:table;background:#00000073;font:bold 42px Oswald,"DejaVu Sans",Tahoma,sans-serif}@media (min-width: 451px){.ui.text.container{max-width:700px!important}}.ui.container{margin-left:auto!important;margin-right:auto!important}.ui.header>.icon{font-size:1.5em}.ui.list>.item>.icon+.content{display:table-cell;width:100%;padding:0 0 0 .5em}.ui.list>.item>i.icon{display:table-cell;margin:0;padding-top:0;padding-right:.29em}.ui.error.message,.ui.negative.message{background-color:#fff6f6;color:#9f3a38}.ui.message{background:#f8f8f9;padding:1em 1.5em;border-radius:.29rem}.icon{filter:grayscale();font-style:normal;}</style>
     </head>
-    <body>
-        <div id="main" class="ui main text container">
-            <div
-                id="error-div"
-                class="ui negative message"
-                style="display: none"
-            >
+    <body style="background-color: #111; line-height: 1.5">
+    <div style="visibility:hidden" id="dropzone">
+    <div id="textnode" style="text-align: center">Drop anywhere!</div>
+</div>
+        <div class="ui text container" style="padding: 20px">
+            <div id="error-div" class="ui negative message" hidden>
                 <div class="header" id="error-title"></div>
                 <p id="error-message"></p>
             </div>
             <h2 class="ui header inverted" style="margin-top: 0">
-                <i class="file icon"></i>
-                <div class="content centered">
-                    <a
-                        href="https://github.com/lorencerri/go-file-server"
-                        target="_blank"
-                    >
-                        go-file-server
-                    </a>
-                    <div class="sub header">
-                        A simple file server written in Go.
-                    </div>
+                <i class="icon">📄</i>
+                <div class="content" style="padding-left:.75rem;">
+                    <a href="https://github.com/lorencerri/go-file-server" target="_blank">go-file-server</a>
+                    <div class="sub header">A simple file server written in Go.</div>
                 </div>
             </h2>
-            <div class="ui divider"></div>
-            <div id="upload-container">
-                <div id="password-input" class="ui mini input">
-                    <input
-                        type="password"
-                        id="password"
-                        placeholder="Password (if required)"
-                    />
-                </div>
-                <label for="hidden-upload" class="ui labeled icon button">
-                    <i class="upload icon"></i>
-                    Upload
-                </label>
-                <input
-                    id="hidden-upload"
-                    type="file"
-                    multiple="multiple"
-                    hidden
-                />
-                <button
-                    class="ui labeled icon button"
-                    style="margin-left: 5px"
-                    onclick="downloadShareXConfig()"
-                >
-                    <i class="download icon"></i>
-                    Download ShareX Config
-                </button>
+                <div class="ui input">
+                    <input type="password" id="password" placeholder="Password (if required)"/>
+                <label for="hidden-upload" class="ui labeled icon button">📁 Upload</label>
             </div>
-            <div
-                id="upload-response-container"
-                class="ui middle aligned divided list inverted"
-            ></div>
-            <div class="ui divider"></div>
-            <div id="upload-container">
-                <div id="password-input" class="ui mini input">
-                    <input
-                        type="password"
-                        id="admin-password"
-                        placeholder="Admin Password"
-                    />
-                </div>
-                <button id="display-files" class="ui labeled icon button">
-                    <i class="th list icon"></i>
-                    Display Files
-                </button>
+                <input id="hidden-upload" type="file" multiple="multiple" hidden/>
+                <button class="ui labeled" hidden onclick="dlcfg()">Download ShareX Config</button>
+            <div id="upload-response-container" class="ui list inverted"></div>
+                <div class="ui input">
+                    <input type="password" id="admin-password" placeholder="Admin Password"/>
+                <label id="display-files" class="ui labeled icon button"> 📋 Display Files</label>
             </div>
-            <div
-                id="files-response-container"
-                class="ui middle aligned divided list inverted"
-            ></div>
+            <div id="files-response-container" class="ui list inverted"></div>
         </div>
         <script type="text/javascript" src="./index.js"></script>
     </body>

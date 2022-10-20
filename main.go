@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"io"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"go.etcd.io/bbolt"
 )
 
+//const GIN_MODE = "release"
 var config Config
 var database *bbolt.DB
 
@@ -38,10 +40,15 @@ func main() {
 	defer db.Close()
 	database = db
 
-	// Create router
-	r := gin.Default()
-	r.SetTrustedProxies(nil)
+	//gin.SetMode(gin.ReleaseMode)
+    gin.DisableConsoleColor()
+    f, _ := os.Create("gin.log") // can be /var/log/gin.log for example
+    gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 
+	r := gin.Default()
+
+	//r.SetTrustedProxies([]string{"127.0.0.1", "10.241.66.1"})
+    r.SetTrustedProxies([]string{"0.0.0.0/0"}) // If you use nginx as reverse proxy then use address of your nginx, like example above
 	// Create routes
 	CreateAPI(r)
 
@@ -51,10 +58,10 @@ func main() {
 
 func preflight() error {
 	// Check if files folder exists, if not, create it
-	if _, err := os.Stat("./files"); errors.Is(err, fs.ErrNotExist) {
-		fmt.Println("./files folder does not exist, creating...")
-		if err := os.Mkdir("./files", 0755); err != nil {
-			return errors.New("error creating ./files folder")
+	if _, err := os.Stat(config.Files.FilesPath); errors.Is(err, fs.ErrNotExist) {
+		fmt.Println(config.Files.FilesPath + " folder does not exist, creating...")
+		if err := os.Mkdir(config.Files.FilesPath, 0755); err != nil {
+			return errors.New("error creating " + config.Files.FilesPath +  " folder")
 		}
 	}
 	return nil
