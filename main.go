@@ -16,13 +16,6 @@ var config Config
 var database *bbolt.DB
 
 func main() {
-
-	// Run preflight checks
-	if err := preflight(); err != nil {
-		fmt.Println(err)
-		return
-	}
-
 	// Handle config
 	c, err := GetConfig()
 	if err != nil {
@@ -30,6 +23,12 @@ func main() {
 		return
 	}
 	config = c
+
+	// Run preflight checks
+	if err := preflight(); err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	// Handle database
 	db, err := bbolt.Open("files.db", 0600, nil)
@@ -61,7 +60,7 @@ func preflight() error {
 	if _, err := os.Stat(config.Files.FilesPath); errors.Is(err, fs.ErrNotExist) {
 		fmt.Println(config.Files.FilesPath + " folder does not exist, creating...")
 		if err := os.Mkdir(config.Files.FilesPath, 0755); err != nil {
-			return errors.New("error creating " + config.Files.FilesPath +  " folder")
+			return errors.New("error creating " + config.Files.FilesPath + " folder")
 		}
 	}
 	return nil
