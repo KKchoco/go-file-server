@@ -10,6 +10,17 @@ A simple file server written in Go, designed for ShareX
 -   Password protected uploading
 -   Optional filetype restrictions
 
+## Main differences from original branch
+
+-   "Superkey" cookie that saves on valid admin password and removes requierment of both passwords 
+-   API_PATH set to "/", main page on "/public/" so files hosted kinda like in [chibisafe](https://github.com/chibisafe/chibisafe)
+-   Upload date saves to db and shows on dashboard 
+-   Logging to file
+-   Working "filesPath" setting in config
+-   Better filename randomization
+-   "Download ShareX Config" button hidden by default, use DevTools to unhide the button
+-   Huge frontend optimizations, initial page size is only 6.8kb (4.46kb gzipped), no external dependences
+
 ## Preview
 
 [<img alt="demo_gif" src="https://fs.plexidev.org/api/pICAQZm.gif" />](https://fs.plexidev.org/api/pICAQZm.gif)
@@ -27,8 +38,8 @@ A simple file server written in Go, designed for ShareX
 
 | Method | Endpoint                         |
 | -----: | :------------------------------- |
-|   POST | /api/upload                      |
-|    GET | /api/{fileName}                  |
-|    GET | /api/{fileName}/stats            |
-|    GET | /api/{fileName}/delete/{editKey} |
-|    GET | /api/files/{adminPassword}       |
+|   POST | /upload                          |
+|    GET | /{fileName}                      |
+|    GET | /{fileName}/stats                |
+|    GET | /{fileName}/delete/{editKey}     |
+|    GET | /files/{adminPassword}           |
